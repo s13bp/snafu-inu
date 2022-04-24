@@ -78,8 +78,12 @@
     data-aos-delay="500"
     data-aos-duration="1500">
 	<div class="w3-container w3-content w3-center " >
+		<label style="font-size: 24px;"><strong>TOKEN ID :</strong></label><br><input type="number" name="tokenId" style="  border: 2px solid rgb(0, 17, 255);
+		border-radius: 30px; height:50px; width:150px; text-align: center; font-size: 20px; font-weight: 500; background-color: rgb(179, 179, 179);"><br><p style="color: aliceblue; font-style: italic;"></p>
+	  </div>
+	  <div class="w3-container w3-content w3-center " >
 		<label style="font-size: 24px;"><strong>AMOUNT :</strong></label><br><input type="number" name="amount" style="  border: 2px solid rgb(0, 17, 255);
-		border-radius: 30px; height:50px; width:150px; text-align: center; font-size: 20px; font-weight: 500; background-color: rgb(179, 179, 179);"><br><p style="color: aliceblue; font-style: italic;">(max amount per wallet = 5)</p>
+		border-radius: 30px; height:50px; width:150px; text-align: center; font-size: 20px; font-weight: 500; background-color: rgb(179, 179, 179);"><br><p style="color: aliceblue; font-style: italic;"></p>
 	  </div>
       <div class="button-container-3" style="width: 200px;height: 70px;">
 	
@@ -131,11 +135,13 @@
 
       contract = new web3.eth.Contract(ABI, ADDRESS);
 
+     
       document.getElementById('mintoza').onclick = async () => {
-        var mintAmount = Number(document.querySelector("[name=amount]").value);
- 	    var cost = Number(await contract.methods.costCheck().call());
-  	    var totalz = cost * mintAmount;
-     	contract.methods.mint(mintAmount).send({ from: account, value:totalz})
+		var tokenId = Number(document.querySelector("[name=tokenId]").value);
+		var amount = Number(document.querySelector("[name=amount]").value);
+		var mintRate = Number(await contract.methods.mintRate().call());
+		var totalAmount = mintRate * amount;
+		contract.methods.mint(tokenId, amount).send({ from: account, value:String(totalAmount)})
 	  };
     }
 
@@ -174,28 +180,7 @@
 
     const ABI = [
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_symbol",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_initBaseURI",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_initNotRevealedUri",
-				"type": "string"
-			}
-		],
+		"inputs": [],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
 	},
@@ -205,32 +190,7 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "approved",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "Approval",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "owner",
+				"name": "account",
 				"type": "address"
 			},
 			{
@@ -252,26 +212,13 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "approve",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_mintAmount",
+				"name": "_amount",
 				"type": "uint256"
 			}
 		],
@@ -300,19 +247,6 @@
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bool",
-				"name": "_state",
-				"type": "bool"
-			}
-		],
-		"name": "pause",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "renounceOwnership",
 		"outputs": [],
@@ -320,13 +254,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -339,12 +266,22 @@
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "amounts",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
 			}
 		],
-		"name": "safeTransferFrom",
+		"name": "safeBatchTransferFrom",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -363,12 +300,17 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "tokenId",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
 				"type": "uint256"
 			},
 			{
 				"internalType": "bytes",
-				"name": "_data",
+				"name": "data",
 				"type": "bytes"
 			}
 		],
@@ -398,64 +340,17 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "_newBaseExtension",
-				"type": "string"
-			}
-		],
-		"name": "setBaseExtension",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_newBaseURI",
-				"type": "string"
-			}
-		],
-		"name": "setBaseURI",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "uint256",
-				"name": "_newCost",
+				"name": "_id",
 				"type": "uint256"
-			}
-		],
-		"name": "setCost",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_newmaxMintAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "setmaxMintAmount",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+			},
 			{
 				"internalType": "string",
-				"name": "_notRevealedURI",
+				"name": "_uri",
 				"type": "string"
 			}
 		],
-		"name": "setNotRevealedURI",
+		"name": "setURI",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -466,6 +361,12 @@
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "from",
 				"type": "address"
 			},
@@ -476,37 +377,20 @@
 				"type": "address"
 			},
 			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "values",
+				"type": "uint256[]"
 			}
 		],
-		"name": "Transfer",
+		"name": "TransferBatch",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "transferFrom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"inputs": [
@@ -522,18 +406,72 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "withdraw",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "TransferSingle",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "value",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "URI",
+		"type": "event"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "owner",
+				"name": "account",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
 			}
 		],
 		"name": "balanceOf",
@@ -548,58 +486,24 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "baseExtension",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "cost",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "costCheck",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "_cost",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
+				"internalType": "address[]",
+				"name": "accounts",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
 			}
 		],
-		"name": "getApproved",
+		"name": "balanceOfBatch",
 		"outputs": [
 			{
-				"internalType": "address",
+				"internalType": "uint256[]",
 				"name": "",
-				"type": "address"
+				"type": "uint256[]"
 			}
 		],
 		"stateMutability": "view",
@@ -609,7 +513,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "owner",
+				"name": "account",
 				"type": "address"
 			},
 			{
@@ -630,8 +534,14 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "maxMintAmount",
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "minted",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -644,7 +554,7 @@
 	},
 	{
 		"inputs": [],
-		"name": "maxSupply",
+		"name": "mintRate",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -658,38 +568,6 @@
 	{
 		"inputs": [],
 		"name": "name",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_supply",
-				"type": "uint256"
-			}
-		],
-		"name": "needToUpdateCost",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "_cost",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "notRevealedUri",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -717,42 +595,16 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "tokenId",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "ownerOf",
+		"name": "supplies",
 		"outputs": [
 			{
-				"internalType": "address",
+				"internalType": "uint256",
 				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "paused",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "revealed",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -794,50 +646,7 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			}
-		],
-		"name": "tokenByIndex",
-		"outputs": [
-			{
-				"internalType": "uint256",
 				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			}
-		],
-		"name": "tokenOfOwnerByIndex",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
 				"type": "uint256"
 			}
 		],
@@ -853,40 +662,27 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "totalSupply",
-		"outputs": [
+		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "_id",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_owner",
-				"type": "address"
-			}
-		],
-		"name": "walletOfOwner",
+		"name": "uri",
 		"outputs": [
 			{
-				"internalType": "uint256[]",
+				"internalType": "string",
 				"name": "",
-				"type": "uint256[]"
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	}
-];
+] ;
   
-  const ADDRESS = "0x371524A9C38F94cE64100312f9C96dF340Bbc499";
+  const ADDRESS = "0x34F68035843D73f3DdE6B4F8bCB5f5A6c3B1cf93";
   document.getElementById('connz').onclick = () =>   (async () => {
   if (window.ethereum) {
     await window.ethereum.send('eth_requestAccounts');
@@ -898,11 +694,13 @@
 
     contract = new web3.eth.Contract(ABI, ADDRESS);
 
-    document.getElementById('mintoza').onclick = async () => {
-      var mintAmount = Number(document.querySelector("[name=amount]").value);
-      var cost = Number(await contract.methods.costCheck().call());
-      var totalz = cost * mintAmount;
-      contract.methods.mint(mintAmount).send({ from: account, value:totalz})
+   
+	document.getElementById('mintoza').onclick = async () => {
+		var tokenId = Number(document.querySelector("[name=tokenId]").value);
+		var amount = Number(document.querySelector("[name=amount]").value);
+		var mintRate = Number(await contract.methods.mintRate().call());
+		var totalAmount = mintRate * amount;
+		contract.methods.mint(tokenId, amount).send({ from: account, value:String(totalAmount)})
     };
   }
   } )();
